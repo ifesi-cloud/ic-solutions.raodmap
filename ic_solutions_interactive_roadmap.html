@@ -1,0 +1,305 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.wrap{padding:1.5rem 0;font-family:var(--font-sans);}
+.top-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.8rem 1rem;}
+.stat-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:3px;}
+.stat-value{font-size:20px;font-weight:500;color:var(--color-text-primary);}
+.stat-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:2px;}
+.phase-label{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-tertiary);margin:1.5rem 0 .6rem;}
+.months-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.mcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:.9rem 1rem;cursor:pointer;transition:border-color .15s;}
+.mcard:hover{border-color:var(--color-border-secondary);}
+.mcard.open{border-color:var(--color-border-secondary);}
+.mcard.done{opacity:.7;}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.mname{font-size:13px;font-weight:500;color:var(--color-text-primary);}
+.msub{font-size:10px;color:var(--color-text-tertiary);margin-top:1px;}
+.rbadge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:5px;cursor:pointer;border:0.5px solid transparent;}
+.pbar{height:3px;border-radius:2px;margin-top:8px;background:var(--color-border-tertiary);overflow:hidden;}
+.pfill{height:100%;border-radius:2px;transition:width .3s;}
+.detail{display:none;border-top:0.5px solid var(--color-border-tertiary);margin-top:10px;padding-top:10px;}
+.detail.show{display:block;}
+.dsec-title{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-tertiary);margin-bottom:5px;margin-top:10px;}
+.dsec-title:first-child{margin-top:0;}
+.goal-row{display:flex;align-items:flex-start;gap:7px;padding:4px 0;border-top:0.5px solid var(--color-border-tertiary);}
+.goal-row:first-of-type{border-top:none;}
+.goal-row input[type=checkbox]{margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:#1D9E75;}
+.goal-text{font-size:12px;color:var(--color-text-secondary);line-height:1.4;cursor:pointer;}
+.goal-text.checked{text-decoration:line-through;color:var(--color-text-tertiary);}
+.rev-edit{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.rev-edit label{font-size:11px;color:var(--color-text-tertiary);}
+.rev-edit input{width:110px;font-size:12px;padding:3px 7px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary);}
+.notes-area{width:100%;margin-top:6px;font-size:12px;padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary);resize:vertical;min-height:52px;font-family:var(--font-sans);}
+.notes-area::placeholder{color:var(--color-text-tertiary);}
+.kpi-row{display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:12px;color:var(--color-text-secondary);}
+.chart-wrap{margin-top:2rem;}
+.legend{display:flex;gap:14px;margin-bottom:8px;font-size:12px;color:var(--color-text-secondary);flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.ldot{width:10px;height:10px;border-radius:2px;}
+.overall-bar{height:8px;border-radius:4px;background:var(--color-border-tertiary);margin:8px 0 4px;overflow:hidden;}
+.overall-fill{height:100%;border-radius:4px;background:#1D9E75;transition:width .4s;}
+.overall-label{font-size:12px;color:var(--color-text-secondary);}
+@media(max-width:580px){.months-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.top-stats{grid-template-columns:repeat(2,minmax(0,1fr));}}
+</style>
+
+<div class="wrap">
+<div class="top-stats">
+  <div class="stat"><div class="stat-label">Target MRR</div><div class="stat-value">£20k</div><div class="stat-sub">by Feb 2027</div></div>
+  <div class="stat"><div class="stat-label">Timeline</div><div class="stat-value">12 mo</div><div class="stat-sub">Mar 2026 – Feb 2027</div></div>
+  <div class="stat"><div class="stat-label">Goals completed</div><div class="stat-value" id="goals-done">0 / 36</div><div class="stat-sub">across all months</div></div>
+  <div class="stat"><div class="stat-label">Overall progress</div><div class="stat-value" id="pct-done">0%</div><div class="stat-sub">tap goals to track</div></div>
+</div>
+
+<div class="overall-bar"><div class="overall-fill" id="overall-fill" style="width:0%"></div></div>
+<div class="overall-label" id="overall-label">0 of 36 goals ticked off</div>
+
+<div id="roadmap"></div>
+
+<div class="chart-wrap">
+  <div class="legend">
+    <span><span class="ldot" style="background:#1D9E75"></span>Foundation</span>
+    <span><span class="ldot" style="background:#378ADD"></span>Traction</span>
+    <span><span class="ldot" style="background:#7F77DD"></span>Scale</span>
+    <span><span class="ldot" style="background:#BA7517"></span>Optimise</span>
+  </div>
+  <div style="position:relative;width:100%;height:190px;"><canvas id="rc"></canvas></div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PC = {1:'#1D9E75',2:'#378ADD',3:'#7F77DD',4:'#BA7517'};
+const PBG = {1:'#E1F5EE',2:'#E6F1FB',3:'#EEEDFE',4:'#FAEEDA'};
+const PTC = {1:'#0F6E56',2:'#185FA5',3:'#3C3489',4:'#854F0B'};
+const PN = {1:'Phase 1 — Foundation',2:'Phase 2 — Traction',3:'Phase 3 — Scale',4:'Phase 4 — Optimise'};
+
+const DATA = [
+  {n:1,name:"March 2026",short:"Mar",phase:1,rev:"£0–500",revNum:250,tagline:"Build the foundation",
+   goals:["Pick 1 niche: hospitality or healthcare","Build portfolio with 1 free/discounted client","Set up brand: website, LinkedIn, social"],
+   kpis:["First automation live","5 outreach messages/day","Case study drafted"],
+   actions:["Choose core service (chatbot, CRM, workflow)","Set up n8n or Make.com stack","Film a short demo video"]},
+  {n:2,name:"April 2026",short:"Apr",phase:1,rev:"£500–1k",revNum:750,tagline:"First paying client",
+   goals:["Land 1st paying retainer (£500–1k/mo)","Create 2–3 case studies from free work","Systemise onboarding process"],
+   kpis:["1 retainer signed","10 outreach messages/day","Testimonial collected"],
+   actions:["Send warm outreach to hotels, clinics, dentists","Build a simple proposal template","Invoice and collect first payment"]},
+  {n:3,name:"May 2026",short:"May",phase:1,rev:"£1k–2k",revNum:1500,tagline:"Prove the model",
+   goals:["Reach £1k–2k MRR","Have 2 paying clients minimum","Refine offer into a productised service"],
+   kpis:["2 active retainers","NPS from clients collected","Service documented"],
+   actions:["Package offer with clear deliverables","Run referral ask to existing clients","Begin building email/content presence"]},
+  {n:4,name:"June 2026",short:"Jun",phase:2,rev:"£2k–4k",revNum:3000,tagline:"Double down on outreach",
+   goals:["Reach £2k–4k MRR","3–4 active clients","Start a consistent content strategy"],
+   kpis:["3 retainers active","Weekly content posted","Sales call pipeline started"],
+   actions:["Post 3x/week on LinkedIn","Cold DM hospitality businesses in UK","Build a basic CRM in Notion or Sheets"]},
+  {n:5,name:"July 2026",short:"Jul",phase:2,rev:"£4k–6k",revNum:5000,tagline:"Systemise delivery",
+   goals:["Reach £4k–6k MRR","Build delivery systems to scale","Consider first subcontractor or VA"],
+   kpis:["4–5 clients","Delivery SOP documented","First hire explored"],
+   actions:["Automate client reporting with n8n","Hire a part-time VA if needed","Upsell existing clients on add-ons"]},
+  {n:6,name:"August 2026",short:"Aug",phase:2,rev:"£6k–8k",revNum:7000,tagline:"Referral engine on",
+   goals:["Reach £6k–8k MRR","Launch a referral programme","Expand into second niche or geography"],
+   kpis:["5–6 clients","1 referral client landed","Revenue from upsells growing"],
+   actions:["Create a referral incentive","Reach out to agency partners","Explore LinkedIn ads or paid outreach"]},
+  {n:7,name:"September 2026",short:"Sep",phase:3,rev:"£8k–11k",revNum:9500,tagline:"Scale with team",
+   goals:["Break £8k MRR","Hire first part-time delivery person","Build a lead generation machine"],
+   kpis:["6–7 clients","First team member onboarded","Lead gen system running"],
+   actions:["Run LinkedIn paid ads targeting hospitality","Build a lead magnet (free audit, template)","Delegate delivery tasks to free your time"]},
+  {n:8,name:"October 2026",short:"Oct",phase:3,rev:"£11k–13k",revNum:12000,tagline:"Raise prices + authority",
+   goals:["Reach £11k–13k MRR","Raise retainer prices for new clients","Position as authority in your niche"],
+   kpis:["7–8 clients","New price point live","Speaking or guest post secured"],
+   actions:["Increase new client pricing by 20–30%","Pitch a podcast, webinar, or guest article","Begin building productised add-on tiers"]},
+  {n:9,name:"November 2026",short:"Nov",phase:3,rev:"£13k–15k",revNum:14000,tagline:"Year-end push",
+   goals:["Reach £13k–15k MRR","Lock in Q1 2027 retainers before Christmas","Review and plan for next year"],
+   kpis:["8–9 clients","3 retainers renewed","2027 goals defined"],
+   actions:["Proactive contract renewal conversations","Send year-end value report to clients","Plan Q1 2027 expansion strategy"]},
+  {n:10,name:"December 2026",short:"Dec",phase:4,rev:"£15k–17k",revNum:16000,tagline:"New year, new deals",
+   goals:["Reach £15k–17k MRR","Close 1–2 larger enterprise clients","Launch a premium tier service"],
+   kpis:["9–10 clients","1 larger deal (£2k+)","Premium offer packaged"],
+   actions:["Target hotel chains and multi-site businesses","Build a premium implementation package","Automate client onboarding fully"]},
+  {n:11,name:"January 2027",short:"Jan",phase:4,rev:"£17k–19k",revNum:18000,tagline:"Final stretch",
+   goals:["Reach £17k–19k MRR","10–11 clients on retainer","Tighten operations to handle growth"],
+   kpis:["10+ clients","Churn rate under 5%","Ops fully documented"],
+   actions:["Focus on client success and retention","Systematise every delivery process","Build waiting list for new clients"]},
+  {n:12,name:"February 2027",short:"Feb",phase:4,rev:"£20k+",revNum:20000,tagline:"Hit the target",
+   goals:["Reach £20k+ MRR","12 clients or 6 at £3k+","Plan next chapter: team, products, or scale"],
+   kpis:["£20k MRR confirmed","Team of 2–3 in place","Roadmap for year 2 written"],
+   actions:["Celebrate and document the journey","Decide: lifestyle business or scale to agency","Explore productised SaaS or white-label"]}
+];
+
+const state = {
+  checked: {},
+  revs: {},
+  notes: {},
+  open: null
+};
+
+DATA.forEach(m => {
+  state.revs[m.n] = m.rev;
+  state.notes[m.n] = '';
+  m.goals.forEach((_,i) => { state.checked[`${m.n}-${i}`] = false; });
+});
+
+const totalGoals = DATA.reduce((a,m) => a + m.goals.length, 0);
+
+function countDone() {
+  return Object.values(state.checked).filter(Boolean).length;
+}
+
+function updateSummary() {
+  const done = countDone();
+  const pct = Math.round(done / totalGoals * 100);
+  document.getElementById('goals-done').textContent = `${done} / ${totalGoals}`;
+  document.getElementById('pct-done').textContent = `${pct}%`;
+  document.getElementById('overall-fill').style.width = pct + '%';
+  document.getElementById('overall-label').textContent = `${done} of ${totalGoals} goals ticked off`;
+}
+
+function monthProgress(m) {
+  const done = m.goals.filter((_,i) => state.checked[`${m.n}-${i}`]).length;
+  return m.goals.length ? Math.round(done / m.goals.length * 100) : 0;
+}
+
+function renderCard(m) {
+  const isOpen = state.open === m.n;
+  const pct = monthProgress(m);
+  const allDone = pct === 100;
+  const color = PC[m.phase];
+  const bgC = PBG[m.phase];
+  const txC = PTC[m.phase];
+
+  const goalsHTML = m.goals.map((g,i) => {
+    const key = `${m.n}-${i}`;
+    const chk = state.checked[key];
+    return `<div class="goal-row">
+      <input type="checkbox" id="chk-${key}" ${chk?'checked':''} onchange="toggleGoal('${key}','${m.n}')">
+      <label for="chk-${key}" class="goal-text${chk?' checked':''}">${g}</label>
+    </div>`;
+  }).join('');
+
+  const kpisHTML = m.kpis.map(k =>
+    `<div class="kpi-row"><span style="color:${color};font-size:9px;margin-top:4px;">●</span>${k}</div>`
+  ).join('');
+
+  const actionsHTML = m.actions.map(a =>
+    `<div class="kpi-row"><span style="color:${color};font-size:9px;margin-top:4px;">▸</span>${a}</div>`
+  ).join('');
+
+  return `<div class="mcard${isOpen?' open':''}${allDone?' done':''}" id="card-${m.n}">
+    <div class="mhead" onclick="toggleCard(${m.n})">
+      <div>
+        <div class="mname">Month ${m.n} · ${m.short}</div>
+        <div class="msub">${m.tagline}</div>
+      </div>
+      <div class="rbadge" style="background:${bgC};color:${txC};border-color:${bgC};" onclick="event.stopPropagation();editRev(${m.n},this)">
+        ${state.revs[m.n]}
+      </div>
+    </div>
+    <div class="pbar"><div class="pfill" style="width:${pct}%;background:${color};"></div></div>
+    <div class="detail${isOpen?' show':''}">
+      <div class="dsec-title">Goals</div>
+      ${goalsHTML}
+      <div class="dsec-title">Revenue target</div>
+      <div class="rev-edit">
+        <label>Target:</label>
+        <input type="text" value="${state.revs[m.n]}" onchange="updateRev(${m.n},this.value)" onclick="event.stopPropagation()" placeholder="e.g. £2k–4k">
+      </div>
+      <div class="dsec-title">KPIs</div>
+      ${kpisHTML}
+      <div class="dsec-title">Actions</div>
+      ${actionsHTML}
+      <div class="dsec-title">My notes</div>
+      <textarea class="notes-area" placeholder="Add your own notes for this month..." onchange="updateNote(${m.n},this.value)" onclick="event.stopPropagation()">${state.notes[m.n]}</textarea>
+    </div>
+  </div>`;
+}
+
+function renderAll() {
+  const container = document.getElementById('roadmap');
+  const groups = {};
+  DATA.forEach(m => { if(!groups[m.phase]) groups[m.phase]=[]; groups[m.phase].push(m); });
+  let html = '';
+  [1,2,3,4].forEach(ph => {
+    html += `<div class="phase-label">${PN[ph]}</div><div class="months-grid">`;
+    groups[ph].forEach(m => { html += renderCard(m); });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+  updateChart();
+  updateSummary();
+}
+
+function toggleCard(n) {
+  state.open = state.open === n ? null : n;
+  renderAll();
+}
+
+function toggleGoal(key, mn) {
+  state.checked[key] = !state.checked[key];
+  updateSummary();
+  const pct = monthProgress(DATA.find(m=>m.n==mn));
+  const card = document.getElementById(`card-${mn}`);
+  if(card) {
+    const fill = card.querySelector('.pfill');
+    if(fill) fill.style.width = pct + '%';
+    if(pct===100) card.classList.add('done'); else card.classList.remove('done');
+  }
+  updateChart();
+}
+
+function updateRev(n, val) {
+  state.revs[n] = val;
+  const badges = document.querySelectorAll(`#card-${n} .rbadge`);
+  badges.forEach(b => { if(!b.querySelector('input')) b.textContent = val; });
+}
+
+function updateNote(n, val) { state.notes[n] = val; }
+
+function editRev(n, el) {
+  el.innerHTML = `<input type="text" value="${state.revs[n]}" style="width:90px;font-size:11px;padding:2px 4px;border:0.5px solid var(--color-border-secondary);border-radius:4px;background:transparent;color:inherit;" onclick="event.stopPropagation()" onblur="saveRev(${n},this,event.target.parentElement)" onkeydown="if(event.key==='Enter')this.blur()">`;
+  el.querySelector('input').focus();
+}
+
+function saveRev(n, inp, badge) {
+  state.revs[n] = inp.value;
+  const m = DATA.find(x=>x.n===n);
+  badge.style.background = PBG[m.phase];
+  badge.style.color = PTC[m.phase];
+  badge.textContent = state.revs[n];
+}
+
+let chart;
+function updateChart() {
+  const bars = DATA.map(m => {
+    const pct = monthProgress(m);
+    return Math.round(m.revNum * (pct/100 * 0.3 + 0.7));
+  });
+  if(chart) {
+    chart.data.datasets[0].data = bars;
+    chart.update();
+    return;
+  }
+  chart = new Chart(document.getElementById('rc'), {
+    type:'bar',
+    data:{
+      labels: DATA.map(m=>m.short),
+      datasets:[{
+        label:'MRR (£)',
+        data: bars,
+        backgroundColor: DATA.map(m=>PC[m.phase]),
+        borderRadius:4,borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'£'+ctx.raw.toLocaleString()+'/mo'}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:11},color:'#888',autoSkip:false,maxRotation:0}},
+        y:{beginAtZero:true,max:22000,grid:{color:'rgba(128,128,128,0.1)'},
+          ticks:{font:{size:11},color:'#888',callback:v=>'£'+(v>=1000?Math.round(v/1000)+'k':v)}}
+      }
+    }
+  });
+}
+
+renderAll();
+</script>
